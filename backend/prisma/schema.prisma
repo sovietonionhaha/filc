@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Felhasznalo {
+  id Int @id @default(autoincrement())
+  teljesNev String @db.VarChar(255) @map("teljes_nev") @unique
+  szuletesiDatum String? @db.VarChar(255) @map("szuletesi_datum")
+  jelszo String @db.VarChar(255)
+  telefonszam String @db.VarChar(255)
+  utolsoBelepes DateTime? @db.DateTime() @updatedAt @map("utolso_belepes")
+  regisztracioDatum DateTime @db.DateTime() @default(now()) @map("regisztracio_datum")
+  iskola Iskola? @relation(fields: [iskolaId], references: [id])
+  iskolaId Int? @map("iskola_id")
+  tanar Tanar?
+  diak Diak?
+  admin Admin?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Tantargy {
+  id Int @id @default(autoincrement())
+  nev String @db.VarChar(255) @unique
+  iskola Iskola? @relation(fields: [iskolaId], references: [id])
+  iskolaId Int? @map("iskola_id")
+  oktatasok Oktatas[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Tanar {
+  id Int @id @default(autoincrement())
+  felhasznalonev String @db.VarChar(255)
+  felhasznalo Felhasznalo @relation(fields: [felhasznaloId], references: [id])
+  felhasznaloId Int @unique @map("felhasznalo_id")
+  osztaly Osztaly?
+  oktatasok Oktatas[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Osztaly {
+  id Int @id @default(autoincrement())
+  azonosito String @db.VarChar(255) @unique
+  tanar Tanar? @relation(fields: [tanarId], references: [id])
+  tanarId Int? @unique @map("tanar_id")
+  iskola Iskola? @relation(fields: [iskolaId], references: [id])
+  iskolaId Int? @map("iskola_id")
+  diakok Diak[]
+  orak Orarend[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Diak {
+  id Int @id @default(autoincrement())
+  omAzonosito String @db.VarChar(255) @map("om_azonosito") @unique
+  osztaly Osztaly? @relation(fields: [osztalyId], references: [id])
+  osztalyId Int? @map("osztaly_id")
+  felhasznalo Felhasznalo @relation(fields: [felhasznaloId], references: [id])
+  felhasznaloId Int @unique @map("felhasznalo_id")
+  jegyek Jegy[]
+  hianyzasok Hianyzas[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Oktatas {
+  id Int @id @default(autoincrement())
+  tanar Tanar @relation(fields: [tanarId], references: [id])
+  tanarId Int @map("tanar_id")
+  tantargy Tantargy @relation(fields: [tantargyId], references: [id])
+  tantargyId Int @map("tantargy_id")
+  jegyek Jegy[]
+  orak Orarend[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Jegy {
+  id Int @id @default(autoincrement())
+  osztalyzat String
+  suly Int? @db.Int
+  datum String @db.VarChar(255)
+  tema String
+  oktatas Oktatas @relation(fields: [oktatasId], references: [id])
+  oktatasId Int @map("oktatas_id")
+  diak Diak @relation(fields: [diakId], references: [id])
+  diakId Int @map("diak_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Admin {
+  id Int @id @default(autoincrement())
+  level Int @db.Int
+  felhasznalo Felhasznalo @relation(fields: [felhasznaloId], references: [id])
+  felhasznaloId Int @unique @map("felhasznalo_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Orarend {
+  id Int @id @default(autoincrement())
+  nap Int
+  torolt Boolean @default(false)
+  ora Ora @relation(fields: [oraId], references: [id])
+  oraId Int @map("ora_id")
+  oktatas Oktatas? @relation(fields: [oktatasId], references: [id])
+  oktatasId Int? @map("oktatas_id")
+  iskola Iskola? @relation(fields: [iskolaId], references: [id])
+  iskolaId Int? @map("iskola_id")
+  osztaly Osztaly? @relation(fields: [osztalyId], references: [id])
+  osztalyId Int? @map("osztaly_id")
+  tanorak Tanora[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Ora {
+  id Int @id @default(autoincrement())
+  kezdete String
+  vege String
+  ora Int
+  orarendek Orarend[]
+  iskola Iskola? @relation(fields: [iskolaId], references: [id])
+  iskolaId Int? @map("iskola_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Iskola {
+  id Int @id @default(autoincrement())
+  nev String @db.VarChar(255) @unique
+  iranyitoszam Int @db.Int
+  weboldal String? @db.VarChar(255)
+  telefonszam String?
+  email String?
+  cim String? @db.VarChar(255)
+  felhasznalok Felhasznalo[]
+  orarendek Orarend[]
+  osztalyok Osztaly[]
+  orak Ora[]
+  tantargyak Tantargy[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Tanora {
+  id Int @id @default(autoincrement())
+  orarend Orarend? @relation(fields: [orarendId], references: [id])
+  orarendId Int? @map("orarend_id")
+  tema String
+  hianyzasok Hianyzas[]  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+model Hianyzas {
+  id Int @id @default(autoincrement())
+  tipus Int?
+  diak Diak @relation(fields: [diakId], references: [id])
+  diakId Int @map("diak_id")
+  tanora Tanora @relation(fields: [tanoraId], references: [id])
+  tanoraId Int @map("tanora_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
